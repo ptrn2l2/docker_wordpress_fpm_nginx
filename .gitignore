@@ -1,0 +1,7 @@
+.secret_env_wpd_wp.env
+.secret_env_wpd_db.env
+logs/nginx/error.log
+logs/nginx/wp_access.log
+logs/nginx/wp_error.log
+wordpress/*.*
+!wordpress/README.txt

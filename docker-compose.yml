@@ -1,0 +1,93 @@
+version: '3.6'
+
+volumes:
+  wpd_db_volume: {}
+  wpd_wordpress_volume: {}
+
+networks:
+  wpd_frontend:
+  wpd_backend:
+
+services:
+
+  wpd_worpress:
+    depends_on: 
+      - wpd_db
+    build:
+      context: .
+      target: wordpress_prod
+      dockerfile: ./dockerfiles/wordpress.Dockerfile
+      args:
+        TAG: 4.9.8-php7.2-fpm-alpine
+    image: wpd_wordpress
+    container_name: wpd_worpress
+    restart: unless-stopped
+    depends_on:
+      - wpd_db
+    networks:
+      - wpd_backend
+      - wpd_frontend
+    volumes:
+      # =================================================
+      # I wanted to use a volume for wordpress files
+      # except for "wp-content" mounted as
+      # local folder, but if when creating for
+      # the first time "wpd_wordpress_volume"
+      # wordpress will see that the volume is empty
+      # and copy wordpress' files overwriting
+      # wp-content too!
+      # So it's safer to share all the wordpress content
+      # as a local file! 
+      # -------------------------------------------------
+      # - wpd_wordpress_volume:/var/www/html
+      # - ./wp-content:/var/www/html/wp-content
+      # -------------------------------------------------
+      - ./wordpress:/var/www/html
+      # =================================================
+      - .:/loc
+    env_file:
+      - ./.secret_env_wpd_wp.env
+    ports:
+      - 9000:9000
+        
+  wpd_db:
+    # choose MySQL
+    image: mysql:8.0
+    # or mariaDB
+    # image: mariadb:10.3
+    container_name: wpd_db
+    restart: unless-stopped
+    volumes:
+      - .:/loc
+    ports: 
+      - 3306:3306
+    env_file:
+      - ./.secret_env_wpd_db.env
+    networks:
+      - wpd_backend
+    volumes: 
+      - wpd_db_volume:/var/lib/mysql
+  
+  wpd_nginx:
+    build:
+      context: .
+      dockerfile: ./dockerfiles/nginx_server.Dockerfile
+    image: wpd_nginx
+    container_name: wpd_nginx
+    restart: unless-stopped
+    depends_on:
+      - wpd_worpress
+    ports:
+      - '80:80'
+    networks:
+      - wpd_frontend
+    volumes:
+      # =================================================
+      # see the volume comment in "wpd_worpress" service
+      # -------------------------------------------------
+      # - wpd_wordpress_volume:/var/www/html
+      # - ./wp-content:/var/www/html/wp-content
+      - ./wordpress:/var/www/html
+      # =================================================
+      - ./logs/nginx:/var/log/nginx
+      - .:/loc
