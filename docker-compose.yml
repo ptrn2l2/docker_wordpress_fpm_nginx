@@ -2,7 +2,11 @@ version: '3.6'
 
 volumes:
   wpd_db_volume: {}
-  wpd_wordpress_volume: {}
+  # =================================================
+  # see the volume comment in "wpd_worpress" service
+  # -------------------------------------------------
+  # wpd_wordpress_volume: {}
+  # =================================================
 
 networks:
   wpd_frontend:
@@ -19,7 +23,7 @@ services:
       dockerfile: ./dockerfiles/wordpress.Dockerfile
       args:
         TAG: 4.9.8-php7.2-fpm-alpine
-    image: wpd_wordpress
+    image: wpd_wordpress_img
     container_name: wpd_worpress
     restart: unless-stopped
     depends_on:
@@ -72,7 +76,7 @@ services:
     build:
       context: .
       dockerfile: ./dockerfiles/nginx_server.Dockerfile
-    image: wpd_nginx
+    image: wpd_nginx_img
     container_name: wpd_nginx
     restart: unless-stopped
     depends_on:
